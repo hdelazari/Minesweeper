@@ -6,7 +6,7 @@ The idea is to make a playable minesweeper with a GUI, with the capaility to sho
 
 # TODO
 
-- [ ] Open a window with tkiner
+- [ ] Open a window with tkinter
 - [ ] Create a board
 - [ ] Display board
 - [ ] Allow player interaction
