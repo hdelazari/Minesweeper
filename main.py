@@ -1,6 +1,7 @@
 import tkinter as tk
 
 
+
 class Button:
     def __init__(self,board,x,y):
         self.pressed = False
@@ -44,7 +45,6 @@ class Display:
                 self.button(i,j)
 
 
-    
     def button(self,x,y):
         self.buttons.append(Button(self.board,x,y))
 
