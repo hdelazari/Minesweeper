@@ -7,9 +7,9 @@ The idea is to make a playable minesweeper with a GUI, with the capaility to sho
 # TODO
 
 - [X] Open a window with tkinter
-- [ ] Create a board
+- [X] Create a board
 - [X] Display board
 - [X] Allow player interaction
-- [ ] Playable Minesweeper
+- [X] Playable Minesweeper
 - [ ] Add menu for board size and see stats
 - [ ] Make AIs (will expand)
