@@ -11,5 +11,8 @@ The idea is to make a playable minesweeper with a GUI, with the capaility to sho
 - [X] Display board
 - [X] Allow player interaction
 - [X] Playable Minesweeper
-- [ ] Add menu for board size and see stats
+- [X] Difficulty setting
+- [ ] Play with keyboard
+- [ ] Record stats
+- [ ] Add menu
 - [ ] Make AIs (will expand)
