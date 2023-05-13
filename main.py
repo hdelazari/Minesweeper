@@ -4,6 +4,7 @@ import random
 
 class Game:
     def __init__(self, rows, columns, n_bombs):
+        self.difficulty = [rows,columns,n_bombs]
         self.running = rows*columns - n_bombs
         self.bombs = random.sample(range(rows*columns), n_bombs)
         self.table = [[0 for i in range(columns)] for j in range(rows)]
@@ -82,34 +83,68 @@ class Display:
         self.fr.pack(fill = "both")
         self.buttons = [[Button(self.fr,i,j) for i in range(columns)] for j in range(rows)]
 
-
-def close(event):
-    window.destroy()
-
 def gameOver():
     for child in window.winfo_children():
         child.destroy()
     gameover = tk.Frame(window,
                         width = 400,
-                        height = 200
+                        height = 200,
+                        highlightbackground = 'black',
+                        highlightthickness = 1
                         )
     gameover.grid(row=0,column=0,columnspan = 2)
     gameover.pack_propagate(False)
-    tk.Label(gameover, text = "Game Over",pady = 100).grid()
+    tk.Label(gameover, text = "Game Over",pady = 100).pack(expand=True)
     startover = tk.Frame(window,
                          width = 200,
                          height = 200,
-                         bg = 'green')
+                         highlightbackground = 'black',
+                         highlightthickness = 1)
     startover.grid(row=1,column=0)
-    startover.bind("<Button-1>",setDifficulty)
+    startover.bind("<Button-1>",lambda event, dif=game.difficulty: newGame(dif))
+    startover.pack_propagate(False)
+    tk.Label(startover, text="New Game").pack(expand=True)
     change = tk.Frame(window,
-                     width = 200,
-                     height = 200,
-                     bg = 'black')
+                      width = 200,
+                      height = 200,
+                      highlightbackground = 'black',
+                      highlightthickness = 1)
     change.grid(row=1,column=1)
+    change.bind("<Button-1>",setDifficulty)
+    change.pack_propagate(False)
+    tk.Label(change, text = "Change Difficulty").pack(expand=True)
 
 def gameWin():
-    print('Yey')
+    for child in window.winfo_children():
+        child.destroy()
+    gamewin = tk.Frame(window,
+                        width = 400,
+                        height = 200,
+                        highlightbackground = 'black',
+                        highlightthickness = 1
+                        )
+    gamewin.grid(row=0,column=0,columnspan = 2)
+    gamewin.pack_propagate(False)
+    tk.Label(gamewin, text = "Congratulations!!",pady = 100).pack(expand=True)
+    startover = tk.Frame(window,
+                         width = 200,
+                         height = 200,
+                         highlightbackground = 'black',
+                         highlightthickness = 1)
+    startover.grid(row=1,column=0)
+    startover.bind("<Button-1>",lambda event, dif=game.difficulty: newGame(dif))
+    startover.pack_propagate(False)
+    tk.Label(startover, text="New Game").pack(expand=True)
+    change = tk.Frame(window,
+                      width = 200,
+                      height = 200,
+                      highlightbackground = 'black',
+                      highlightthickness = 1)
+    change.grid(row=1,column=1)
+    change.bind("<Button-1>",setDifficulty)
+    change.pack_propagate(False)
+    tk.Label(change, text = "Change Difficulty").pack(expand=True)
+
 
 def openNeighbors(x,y):
     if (x>0):
@@ -130,7 +165,7 @@ def openNeighbors(x,y):
         board.buttons[y+1][x].butt.event_generate("<Button-1>")
  
 
-def newGame(event,difficulty):
+def newGame(difficulty):
     for child in window.winfo_children():
         child.destroy()
     global game
@@ -139,6 +174,7 @@ def newGame(event,difficulty):
     for i in range(len(game.table)):
         print(game.table[i])
     board = Display(window, difficulty[0], difficulty[1])
+    window.bind("<Control-Key-r>", lambda event, dif=game.difficulty: newGame(dif))
 
 
 def setDifficulty(event):
@@ -152,7 +188,7 @@ def setDifficulty(event):
                         )
     easyFrame.grid(row=0,column=0)
     easyFrame.pack_propagate(False)
-    easyFrame.bind("<Button-1>", lambda event, dif=[8,8,10]: newGame(event,dif))
+    easyFrame.bind("<Button-1>", lambda event, dif=[8,8,10]: newGame(dif))
     Easy = tk.Label(easyFrame, text = "Easy")
     Easy.pack(expand=True)
     mediumFrame = tk.Frame(window,
@@ -162,7 +198,7 @@ def setDifficulty(event):
                          highlightthickness = 1)
     mediumFrame.grid(row=1,column=0)
     mediumFrame.pack_propagate(False)
-    mediumFrame.bind("<Button-1>", lambda event, dif=[16,16,40]: newGame(event,dif))
+    mediumFrame.bind("<Button-1>", lambda event, dif=[16,16,40]: newGame(dif))
     Medium = tk.Label(mediumFrame, text = "Medium")
     Medium.pack(expand=True)
     hardFrame = tk.Frame(window,
@@ -172,7 +208,7 @@ def setDifficulty(event):
                       highlightthickness = 1)
     hardFrame.grid(row=2,column=0)
     hardFrame.pack_propagate(False)
-    hardFrame.bind("<Button-1>", lambda event, dif=[16,30,99]: newGame(event,dif))
+    hardFrame.bind("<Button-1>", lambda event, dif=[16,30,99]: newGame(dif))
     Hard = tk.Label(hardFrame, text = "Hard")
     Hard.pack(expand=True)
  
@@ -180,7 +216,6 @@ def setDifficulty(event):
 
 window = tk.Tk()
 window.geometry("400x400")
-
 
 game, board = Game(1,1,1), Display(window,1,1)
 
@@ -190,6 +225,5 @@ setDifficulty("<Button>")
 
 
 #Keeps the window open untill closure
-window.bind("<Control-Key-w>", close)
-window.bind("<Control-Key-r>", newGame)
+window.bind("<Control-Key-w>", lambda event: window.destroy())
 window.mainloop()
