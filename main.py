@@ -32,8 +32,6 @@ class Game:
             count+=1
         if (y<len(self.table)-1 and self.table[y+1][x]):
             count+=1
-        if (count==0):
-            openNeighbors(x,y)
         return count
 
 
@@ -41,6 +39,7 @@ class Button:
     def __init__(self, b, x, y):
         self.pressed = False
         self.flag = False
+        self.bombCount = game.countBombs(x,y)
         self.butt = tk.Frame(b,
                 bg = "grey",
                 highlightbackground = "black",
@@ -58,6 +57,8 @@ class Button:
         self.click2(x,y,event.num)
     def click2(self,x,y,event_num):
         if self.pressed:
+            if board.countFlags(x,y)==self.bombCount:
+                openNeighbors(x,y)
             return 0
         elif(event_num == 2 or event_num == 3):
             if self.flag:
@@ -71,7 +72,9 @@ class Button:
             if game.table[y][x]:
                 gameOver()
             else:
-                tk.Label(self.butt, text=game.countBombs(x,y)).pack()
+                tk.Label(self.butt, text=self.bombCount).pack(expand=True)
+                if self.bombCount == 0:
+                    openNeighbors(x,y)
                 game.running -= 1
             if not game.running:
                 gameWin()
@@ -87,6 +90,29 @@ class Display:
         self.fr.columnconfigure(0,weight=1)
         self.fr.pack_propagate(False)
         self.buttons = [[Button(self.fr,i,j) for i in range(columns)] for j in range(rows)]
+    def countFlags(self,x,y):
+        count = 0
+        if (x>0):
+            if (self.buttons[y][x-1].flag):
+                count+=1
+            if (y>0 and self.buttons[y-1][x-1].flag):
+                count+=1
+            if (y<len(self.buttons)-1 and self.buttons[y+1][x-1].flag):
+                count+=1
+        if (x<len(self.buttons[0])-1):
+            if (self.buttons[y][x+1].flag):
+                count+=1
+            if (y>0 and self.buttons[y-1][x+1].flag):
+                count+=1
+            if (y<len(self.buttons)-1 and self.buttons[y+1][x+1].flag):
+                count+=1
+        if (y>0 and self.buttons[y-1][x].flag):
+            count+=1
+        if (y<len(self.buttons)-1 and self.buttons[y+1][x].flag):
+            count+=1
+        return count
+
+
 
 def gameOver():
     for child in board.fr.winfo_children():
@@ -166,20 +192,22 @@ def gameWin():
    
 def openNeighbors(x,y):
     if (x>0):
-        board.buttons[y][x-1].butt.event_generate("<Button-1>")
-        if (y>0):
+        if game.running and not board.buttons[y][x-1].pressed:
+            board.buttons[y][x-1].butt.event_generate("<Button-1>")
+        if (game.running and y>0 and not board.buttons[y-1][x-1].pressed):
             board.buttons[y-1][x-1].butt.event_generate("<Button-1>")
-        if (y<len(game.table)-1):
+        if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x-1].pressed):
             board.buttons[y+1][x-1].butt.event_generate("<Button-1>")
     if (x<len(game.table[0])-1):
-        board.buttons[y][x+1].butt.event_generate("<Button-1>")
-        if (y>0):
+        if  game.running and not board.buttons[y][x+1].pressed:
+            board.buttons[y][x+1].butt.event_generate("<Button-1>")
+        if (game.running and y>0 and not board.buttons[y-1][x+1].pressed):
             board.buttons[y-1][x+1].butt.event_generate("<Button-1>")
-        if (y<len(game.table)-1):
+        if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x+1].pressed):
             board.buttons[y+1][x+1].butt.event_generate("<Button-1>")
-    if (y>0):
+    if (game.running and y>0 and not board.buttons[y-1][x].pressed):
         board.buttons[y-1][x].butt.event_generate("<Button-1>")
-    if (y<len(game.table)-1):
+    if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x].pressed):
         board.buttons[y+1][x].butt.event_generate("<Button-1>")
  
 
@@ -241,7 +269,9 @@ def conf(event):
 window = tk.Tk()
 window.geometry("400x400")
 
-game, board = Game(1,1,1), Display(window,1,1)
+game = Game(1,1,1)
+
+board = Display(window,1,1)
 
 setDifficulty("<Button>")
 
