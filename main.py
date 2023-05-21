@@ -1,6 +1,6 @@
 import tkinter as tk
 import random
-
+import time
 
 class Game:
     def __init__(self, rows, columns, n_bombs):
@@ -36,6 +36,15 @@ class Game:
 
 
 class Button:
+    color = {0: 'lightgrey',
+            1: 'green',
+            2: 'yellow',
+            3: 'pink',
+            4: 'orange',
+            5: 'red',
+            6: 'red',
+            7: 'red',
+            8: 'red'}
     def __init__(self, b, x, y):
         self.pressed = False
         self.flag = False
@@ -68,19 +77,21 @@ class Button:
             self.flag = not self.flag
         elif (event_num == 1 and not self.flag):
             self.pressed = True
-            self.butt.config(bg = "lightgrey",relief=tk.SUNKEN)
+            self.butt.config(bg = self.color[self.bombCount],relief=tk.SUNKEN)
             if game.table[y][x]:
                 gameOver()
             else:
-                tk.Label(self.butt, text=self.bombCount).pack(expand=True)
+                tk.Label(self.butt, text=self.bombCount, bg = self.color[self.bombCount]).pack(expand=True)
                 if self.bombCount == 0:
                     openNeighbors(x,y)
                 game.running -= 1
             if not game.running:
                 gameWin()
+        
 
 
 class Display:
+    lasttime = time.time()
     def __init__(self, window, rows, columns):
         self.fr = tk.Frame(window,
                            highlightbackground='red',
@@ -212,10 +223,10 @@ def openNeighbors(x,y):
  
 
 def newGame(difficulty):
-    for child in window.winfo_children():
-        child.destroy()
     global game
     global board
+    for child in window.winfo_children():
+        child.destroy()
     game = Game(*difficulty)
     for i in range(len(game.table)):
         print(game.table[i])
@@ -224,6 +235,7 @@ def newGame(difficulty):
 
 
 def setDifficulty(event):
+    board.fr.unbind('<Configure>')
     for child in board.fr.winfo_children():
         child.destroy()
     board.fr.columnconfigure(0,weight=1)
@@ -231,37 +243,50 @@ def setDifficulty(event):
     board.fr.rowconfigure(1,weight=1)
     board.fr.rowconfigure(2,weight=1)
     easyFrame = tk.Frame(board.fr,
-                        width = 400,
-                        height = 100,
+                        width = board.fr.winfo_width(),
+                        height = board.fr.winfo_height()/3,
                         highlightbackground = 'black',
                         highlightthickness = 1
                         )
     easyFrame.grid(row=0,column=0,sticky=tk.NW+tk.NE+tk.S)
     easyFrame.pack_propagate(False)
     easyFrame.bind("<Button-1>", lambda event, dif=[8,8,10]: newGame(dif))
-    Easy = tk.Label(easyFrame, text = "Easy")
+    Easy = tk.Label(easyFrame, text = "8x8\n10 mines")
     Easy.pack(expand=True)
+    Easy.bind("<Button-1>", lambda event, dif=[8,8,10]: newGame(dif))
     mediumFrame = tk.Frame(board.fr,
-                         width = 400,
-                         height = 100,
+                         width = board.fr.winfo_width(),
+                         height = board.fr.winfo_height()/3,
                          highlightbackground = 'black',
                          highlightthickness = 1)
     mediumFrame.grid(row=1,column=0,sticky=tk.NW+tk.NE+tk.S)
     mediumFrame.pack_propagate(False)
     mediumFrame.bind("<Button-1>", lambda event, dif=[16,16,40]: newGame(dif))
-    Medium = tk.Label(mediumFrame, text = "Medium")
+    Medium = tk.Label(mediumFrame, text = "16x16\n40 mines")
     Medium.pack(expand=True)
+    Medium.bind("<Button-1>", lambda event, dif=[16,16,40]: newGame(dif))
     hardFrame = tk.Frame(board.fr,
-                      width = 400,
-                      height = 100,
+                      width = board.fr.winfo_width(),
+                      height = board.fr.winfo_height()/3,
                       highlightbackground = 'black',
                       highlightthickness = 1)
     hardFrame.grid(row=2,column=0,sticky=tk.NW+tk.NE+tk.S)
     hardFrame.pack_propagate(False)
     hardFrame.bind("<Button-1>", lambda event, dif=[16,30,99]: newGame(dif))
-    Hard = tk.Label(hardFrame, text = "Hard")
+    Hard = tk.Label(hardFrame, text = "16x30\n99 mines")
     Hard.pack(expand=True)
- 
+    Hard.bind("<Button-1>", lambda event, dif=[16,30,99]: newGame(dif))
+    def setDifConf(event):
+        if time.time()-board.lasttime>2:
+            print('Conf')
+            easyFrame.config(width = board.fr.winfo_width(),
+                             height = board.fr.winfo_height()/3)
+            mediumFrame.config(width = board.fr.winfo_width(),
+                             height = board.fr.winfo_height()/3)
+            hardFrame.config(width = board.fr.winfo_width(),
+                             height = board.fr.winfo_height()/3)
+#        board.lasttime = time.time()
+    board.fr.bind('<Configure>', setDifConf) 
 
 def conf(event):
     board.fr.config(height=window.winfo_height(), width=window.winfo_width())
@@ -269,12 +294,13 @@ def conf(event):
 window = tk.Tk()
 window.geometry("400x400")
 
+
 game = Game(1,1,1)
+
 
 board = Display(window,1,1)
 
-setDifficulty("<Button>")
-
+setDifficulty('<Button>')
 
 #Keeps the window open untill closure
 window.bind('<Configure>',conf)
