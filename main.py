@@ -49,17 +49,24 @@ class Button:
         self.pressed = False
         self.flag = False
         self.bombCount = game.countBombs(x,y)
-        self.butt = tk.Frame(b,
-                bg = "grey",
-                highlightbackground = "black",
-                highlightthickness  = "1"
-                )
+        self.butt = tk.Frame(b.fr,
+                             bg = "grey",
+                             highlightbackground = "black",
+                             highlightcolor = "orange",
+                             highlightthickness  = "1"
+                             )
         self.butt.pack_propagate(False)
         self.butt.grid(column=x,
                   row=y,sticky=tk.N+tk.S+tk.E+tk.W)
-        b.columnconfigure(x,weight=1)
-        b.rowconfigure(y,weight=1)
+        b.fr.columnconfigure(x,weight=1)
+        b.fr.rowconfigure(y,weight=1)
         self.butt.bind("<Button>", self.click)
+        self.butt.bind('<Up>',b.move_cursor)
+        self.butt.bind('<Down>',b.move_cursor)
+        self.butt.bind('<Left>',b.move_cursor)
+        self.butt.bind('<Right>',b.move_cursor)
+        self.butt.bind('<space>',lambda event: self.click2(x,y,1))
+        self.butt.bind('<Control-space>', lambda event: self.click2(x,y,3))
     def click(self,event):
         x = event.widget.grid_info()['column']
         y = event.widget.grid_info()['row']
@@ -100,7 +107,10 @@ class Display:
         self.fr.grid(row=0,column=0,sticky='news')
         self.fr.columnconfigure(0,weight=1)
         self.fr.pack_propagate(False)
-        self.buttons = [[Button(self.fr,i,j) for i in range(columns)] for j in range(rows)]
+        self.buttons = [[Button(self,i,j) for i in range(columns)] for j in range(rows)]
+        self.cursor_x = 0
+        self.cursor_y = 0
+        self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
     def countFlags(self,x,y):
         count = 0
         if (x>0):
@@ -122,7 +132,20 @@ class Display:
         if (y<len(self.buttons)-1 and self.buttons[y+1][x].flag):
             count+=1
         return count
-
+    def move_cursor(self,event):
+        if event.keysym == 'Up':
+            self.cursor_y-=1
+            self.cursor_y%=len(self.buttons)
+        elif event.keysym == 'Down':
+            self.cursor_y+=1
+            self.cursor_y%=len(self.buttons)
+        elif event.keysym == 'Left':
+            self.cursor_x-=1
+            self.cursor_y%=len(self.buttons[0])
+        elif event.keysym == 'Right':
+            self.cursor_x+=1
+            self.cursor_y%=len(self.buttons[0])
+        self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
 
 
 def gameOver():
