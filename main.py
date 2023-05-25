@@ -2,38 +2,6 @@ import tkinter as tk
 import random
 import time
 
-class Game:
-    def __init__(self, rows, columns, n_bombs):
-        self.difficulty = [rows,columns,n_bombs]
-        self.running = rows*columns - n_bombs
-        self.bombs = random.sample(range(rows*columns), n_bombs)
-        self.table = [[0 for i in range(columns)] for j in range(rows)]
-        for i in range(columns):
-            for j in range(rows):
-                if j*columns+i in self.bombs:
-                    self.table[j][i] = 1
-    def countBombs(self,x,y):
-        count = 0
-        if (x>0):
-            if (self.table[y][x-1]):
-                count+=1
-            if (y>0 and self.table[y-1][x-1]):
-                count+=1
-            if (y<len(self.table)-1 and self.table[y+1][x-1]):
-                count+=1
-        if (x<len(self.table[0])-1):
-            if (self.table[y][x+1]):
-                count+=1
-            if (y>0 and self.table[y-1][x+1]):
-                count+=1
-            if (y<len(self.table)-1 and self.table[y+1][x+1]):
-                count+=1
-        if (y>0 and self.table[y-1][x]):
-            count+=1
-        if (y<len(self.table)-1 and self.table[y+1][x]):
-            count+=1
-        return count
-
 
 class Button:
     color = {0: 'lightgrey',
@@ -45,10 +13,10 @@ class Button:
             6: 'red',
             7: 'red',
             8: 'red'}
-    def __init__(self, b, x, y):
+    def __init__(self, b, x, y, is_bomb):
+        self.is_bomb = is_bomb
         self.pressed = False
         self.flag = False
-        self.bombCount = game.countBombs(x,y)
         self.butt = tk.Frame(b.fr,
                              bg = "grey",
                              highlightbackground = "black",
@@ -60,18 +28,16 @@ class Button:
                   row=y,sticky=tk.N+tk.S+tk.E+tk.W)
         b.fr.columnconfigure(x,weight=1)
         b.fr.rowconfigure(y,weight=1)
-        self.butt.bind("<Button>", self.click)
+        self.butt.bind("<Button>", lambda event: self.click(x,y,event.num))
         self.butt.bind('<Up>',b.move_cursor)
         self.butt.bind('<Down>',b.move_cursor)
         self.butt.bind('<Left>',b.move_cursor)
         self.butt.bind('<Right>',b.move_cursor)
-        self.butt.bind('<space>',lambda event: self.click2(x,y,1))
-        self.butt.bind('<Control-space>', lambda event: self.click2(x,y,3))
-    def click(self,event):
-        x = event.widget.grid_info()['column']
-        y = event.widget.grid_info()['row']
-        self.click2(x,y,event.num)
-    def click2(self,x,y,event_num):
+        self.butt.bind('<space>',lambda event: self.click(x,y,1))
+        self.butt.bind('<Control-space>', lambda event: self.click(x,y,3))
+
+    def click(self,x,y,event_num):
+        self.bombCount= board.countBombs(x,y)
         if self.pressed:
             if board.countFlags(x,y)==self.bombCount:
                 openNeighbors(x,y)
@@ -85,21 +51,23 @@ class Button:
         elif (event_num == 1 and not self.flag):
             self.pressed = True
             self.butt.config(bg = self.color[self.bombCount],relief=tk.SUNKEN)
-            if game.table[y][x]:
+            if self.is_bomb:
                 gameOver()
             else:
                 tk.Label(self.butt, text=self.bombCount, bg = self.color[self.bombCount]).pack(expand=True)
                 if self.bombCount == 0:
                     openNeighbors(x,y)
-                game.running -= 1
-            if not game.running:
+                board.running -= 1
+            if not board.running:
                 gameWin()
         
 
-
 class Display:
     lasttime = time.time()
-    def __init__(self, window, rows, columns):
+    def __init__(self, window, rows, columns, n_bombs):
+        self.difficulty = [rows,columns,n_bombs]
+        self.running = rows*columns - n_bombs
+        self.bombs = random.sample(range(rows*columns), n_bombs)
         self.fr = tk.Frame(window,
                            highlightbackground='red',
                            highlightthickness=2
@@ -107,10 +75,33 @@ class Display:
         self.fr.grid(row=0,column=0,sticky='news')
         self.fr.columnconfigure(0,weight=1)
         self.fr.pack_propagate(False)
-        self.buttons = [[Button(self,i,j) for i in range(columns)] for j in range(rows)]
+        self.buttons = [[Button(self,i,j, j*columns+i in self.bombs) for i in range(columns)] for j in range(rows)]
         self.cursor_x = 0
         self.cursor_y = 0
         self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
+
+    def countBombs(self,x,y):
+        count = 0
+        if (x>0):
+            if (self.buttons[y][x-1].is_bomb):
+                count+=1
+            if (y>0 and self.buttons[y-1][x-1].is_bomb):
+                count+=1
+            if (y<len(self.buttons)-1 and self.buttons[y+1][x-1].is_bomb):
+                count+=1
+        if (x<len(self.buttons[0])-1):
+            if (self.buttons[y][x+1].is_bomb):
+                count+=1
+            if (y>0 and self.buttons[y-1][x+1].is_bomb):
+                count+=1
+            if (y<len(self.buttons)-1 and self.buttons[y+1][x+1].is_bomb):
+                count+=1
+        if (y>0 and self.buttons[y-1][x].is_bomb):
+            count+=1
+        if (y<len(self.buttons)-1 and self.buttons[y+1][x].is_bomb):
+            count+=1
+        return count
+
     def countFlags(self,x,y):
         count = 0
         if (x>0):
@@ -132,6 +123,7 @@ class Display:
         if (y<len(self.buttons)-1 and self.buttons[y+1][x].flag):
             count+=1
         return count
+
     def move_cursor(self,event):
         if event.keysym == 'Up':
             self.cursor_y-=1
@@ -175,7 +167,7 @@ def gameOver():
     board.fr.rowconfigure(0,weight=1)
     board.fr.rowconfigure(1,weight=1)
     tk.Label(gameover, text = "Game Over").pack(expand=True)
-    startover.bind("<Button-1>",lambda event, dif=game.difficulty: newGame(dif))
+    startover.bind("<Button-1>",lambda event, dif=board.difficulty: newGame(dif))
     tk.Label(startover, text="New Game").pack(expand=True)
     change.bind("<Button-1>",setDifficulty)
     tk.Label(change, text = "Change Difficulty").pack(expand=True)
@@ -212,7 +204,7 @@ def gameWin():
     board.fr.rowconfigure(0,weight=1)
     board.fr.rowconfigure(1,weight=1)
     tk.Label(gamewin, text = "Congratulations!").pack(expand=True)
-    startover.bind("<Button-1>",lambda event, dif=game.difficulty: newGame(dif))
+    startover.bind("<Button-1>",lambda event, dif=board.difficulty: newGame(dif))
     tk.Label(startover, text="New Game").pack(expand=True)
     change.bind("<Button-1>",setDifficulty)
     tk.Label(change, text = "Change Difficulty").pack(expand=True)
@@ -226,35 +218,35 @@ def gameWin():
    
 def openNeighbors(x,y):
     if (x>0):
-        if game.running and not board.buttons[y][x-1].pressed:
-            board.buttons[y][x-1].butt.event_generate("<Button-1>")
-        if (game.running and y>0 and not board.buttons[y-1][x-1].pressed):
-            board.buttons[y-1][x-1].butt.event_generate("<Button-1>")
-        if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x-1].pressed):
-            board.buttons[y+1][x-1].butt.event_generate("<Button-1>")
-    if (x<len(game.table[0])-1):
-        if  game.running and not board.buttons[y][x+1].pressed:
-            board.buttons[y][x+1].butt.event_generate("<Button-1>")
-        if (game.running and y>0 and not board.buttons[y-1][x+1].pressed):
-            board.buttons[y-1][x+1].butt.event_generate("<Button-1>")
-        if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x+1].pressed):
-            board.buttons[y+1][x+1].butt.event_generate("<Button-1>")
-    if (game.running and y>0 and not board.buttons[y-1][x].pressed):
-        board.buttons[y-1][x].butt.event_generate("<Button-1>")
-    if (game.running and y<len(game.table)-1 and not board.buttons[y+1][x].pressed):
-        board.buttons[y+1][x].butt.event_generate("<Button-1>")
+        if board.running and not board.buttons[y][x-1].pressed:
+            board.buttons[y][x-1].click(x-1,y,1)
+        if (board.running and y>0 and not board.buttons[y-1][x-1].pressed):
+            board.buttons[y-1][x-1].click(x-1,y-1,1)
+        if (board.running and y<len(board.buttons)-1 and not board.buttons[y+1][x-1].pressed):
+            board.buttons[y+1][x-1].click(x-1,y+1,1)
+    if (x<len(board.buttons[0])-1):
+        if  board.running and not board.buttons[y][x+1].pressed:
+            board.buttons[y][x+1].click(x+1,y,1)
+        if (board.running and y>0 and not board.buttons[y-1][x+1].pressed):
+            board.buttons[y-1][x+1].click(x+1,y-1,1)
+        if (board.running and y<len(board.buttons)-1 and not board.buttons[y+1][x+1].pressed):
+            board.buttons[y+1][x+1].click(x+1,y+1,1)
+    if (board.running and y>0 and not board.buttons[y-1][x].pressed):
+        board.buttons[y-1][x].click(x,y-1,1)
+    if (board.running and y<len(board.buttons)-1 and not board.buttons[y+1][x].pressed):
+        board.buttons[y+1][x].click(x,y+1,1)
  
 
 def newGame(difficulty):
-    global game
+#    global game
     global board
     for child in window.winfo_children():
         child.destroy()
-    game = Game(*difficulty)
-    for i in range(len(game.table)):
-        print(game.table[i])
-    board = Display(window, difficulty[0], difficulty[1])
-    window.bind("<Control-Key-r>", lambda event, dif=game.difficulty: newGame(dif))
+#    game = Game(*difficulty)
+#    for i in range(len(game.table)):
+#        print(game.table[i])
+    board = Display(window, *difficulty)
+    window.bind("<Control-Key-r>", lambda event, dif=board.difficulty: newGame(dif))
 
 
 def setDifficulty(event):
@@ -318,10 +310,10 @@ window = tk.Tk()
 window.geometry("400x400")
 
 
-game = Game(1,1,1)
+#game = Game(1,1,1)
 
 
-board = Display(window,1,1)
+board = Display(window,1,1,1)
 
 setDifficulty('<Button>')
 
