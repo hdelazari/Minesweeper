@@ -1,7 +1,7 @@
 import tkinter as tk
 import random
 import time
-
+from solver import Solver
 
 class Button:
     color = {0: 'lightgrey',
@@ -39,14 +39,16 @@ class Button:
     def click(self,x,y,event_num):
         self.bombCount= board.countBombs(x,y)
         if self.pressed:
-            if board.countFlags(x,y)==self.bombCount:
+            if board.countFlags(x,y)==self.bombCount and event_num==1:
                 openNeighbors(x,y)
             return 0
         elif(event_num == 2 or event_num == 3):
             if self.flag:
                 self.butt.config(bg = "grey")
+                self.butt.winfo_children()[0].destroy()
             else:
                 self.butt.config(bg = "red")
+                tk.Label(self.butt, text='f')
             self.flag = not self.flag
         elif (event_num == 1 and not self.flag):
             self.pressed = True
@@ -79,6 +81,7 @@ class Display:
         self.cursor_x = 0
         self.cursor_y = 0
         self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
+        self.game = [['_' for i in range(columns)] for j in range(rows)]
 
     def countBombs(self,x,y):
         count = 0
@@ -138,6 +141,14 @@ class Display:
             self.cursor_x+=1
             self.cursor_y%=len(self.buttons[0])
         self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
+
+    def click(self, y, x, event_num):
+        self.buttons[y][x].click(x,y,event_num)
+    
+    def outside_view(self):
+        for fr in self.fr.winfo_children():
+            label = fr.winfo_children()
+            self.game[fr.grid_info()['row']][fr.grid_info()['column']] = label[0].cget('text') if label else ''
 
 
 def gameOver():
@@ -238,13 +249,9 @@ def openNeighbors(x,y):
  
 
 def newGame(difficulty):
-#    global game
     global board
     for child in window.winfo_children():
         child.destroy()
-#    game = Game(*difficulty)
-#    for i in range(len(game.table)):
-#        print(game.table[i])
     board = Display(window, *difficulty)
     window.bind("<Control-Key-r>", lambda event, dif=board.difficulty: newGame(dif))
 
@@ -293,24 +300,32 @@ def setDifficulty(event):
     Hard.bind("<Button-1>", lambda event, dif=[16,30,99]: newGame(dif))
     def setDifConf(event):
         if time.time()-board.lasttime>2:
-            print('Conf')
             easyFrame.config(width = board.fr.winfo_width(),
                              height = board.fr.winfo_height()/3)
             mediumFrame.config(width = board.fr.winfo_width(),
                              height = board.fr.winfo_height()/3)
             hardFrame.config(width = board.fr.winfo_width(),
                              height = board.fr.winfo_height()/3)
-#        board.lasttime = time.time()
     board.fr.bind('<Configure>', setDifConf) 
 
 def conf(event):
     board.fr.config(height=window.winfo_height(), width=window.winfo_width())
 
+def solve():
+    solve = Solver()
+    clicks = [(0,0,0)]
+    while clicks:
+        board.outside_view()
+        clicks = solve.solve(board.game)
+        for click in clicks:
+            print(click)
+            board.click(*click)
+
+
+
+
 window = tk.Tk()
 window.geometry("400x400")
-
-
-#game = Game(1,1,1)
 
 
 board = Display(window,1,1,1)
@@ -318,6 +333,7 @@ board = Display(window,1,1,1)
 setDifficulty('<Button>')
 
 #Keeps the window open untill closure
+window.bind('<Control-Key-c>',lambda event: solve())
 window.bind('<Configure>',conf)
 window.bind("<Control-Key-w>", lambda event: window.destroy())
 window.mainloop()
