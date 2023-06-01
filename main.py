@@ -136,10 +136,10 @@ class Display:
             self.cursor_y%=len(self.buttons)
         elif event.keysym == 'Left':
             self.cursor_x-=1
-            self.cursor_y%=len(self.buttons[0])
+            self.cursor_x%=len(self.buttons[0])
         elif event.keysym == 'Right':
             self.cursor_x+=1
-            self.cursor_y%=len(self.buttons[0])
+            self.cursor_x%=len(self.buttons[0])
         self.buttons[self.cursor_y][self.cursor_x].butt.focus_set()
 
     def click(self, y, x, event_num):
@@ -152,19 +152,19 @@ class Display:
 
 
 def gameOver():
-    for child in board.fr.winfo_children():
-        child.destroy()
-    gameover = tk.Frame(board.fr,
-                        width = board.fr.winfo_width(),
-                        height = board.fr.winfo_height()/2,
+    GOscreen = tk.Toplevel(window)
+    GOscreen.geometry('400x400')
+    gameover = tk.Frame(GOscreen,
+                        width = GOscreen.winfo_width(),
+                        height = GOscreen.winfo_height()/2,
                         highlightbackground = 'black',
                         highlightthickness = 1
                         )
-    startover = tk.Frame(board.fr,
-                         height = board.fr.winfo_height()/2,
+    startover = tk.Frame(GOscreen,
+                         height = GOscreen.winfo_height()/2,
                          highlightbackground = 'black',
                          highlightthickness = 1)
-    change = tk.Frame(board.fr,
+    change = tk.Frame(GOscreen,
                       highlightbackground = 'black',
                       highlightthickness = 1)
     gameover.pack_propagate(False)
@@ -183,25 +183,27 @@ def gameOver():
     change.bind("<Button-1>",setDifficulty)
     tk.Label(change, text = "Change Difficulty").pack(expand=True)
     def gameOverConf(event):
-        gameover.config(width=board.fr.winfo_width(),
-                        height = board.fr.winfo_height()/2)
-        startover.config(height = board.fr.winfo_height()/2)
-    board.fr.bind('<Configure>',gameOverConf)
+        gameover.config(width= GOscreen.winfo_width(),
+                        height = GOscreen.winfo_height()/2)
+        startover.config(height = GOscreen.winfo_height()/2)
+    GOscreen.bind('<Configure>',gameOverConf)
+    GOscreen.bind('<Control-Key-r>', lambda event, dif=board.difficulty: newGame(dif))
+    GOscreen.bind("<Control-Key-w>", lambda event: window.destroy())
 
 def gameWin():
-    for child in board.fr.winfo_children():
-        child.destroy()
-    gamewin = tk.Frame(board.fr,
-                        width = board.fr.winfo_width(),
-                        height = board.fr.winfo_height()/2,
+    GWscreen = tk.Toplevel(window)
+    GWscreen.geometry('400x400')
+    gamewin = tk.Frame(GWscreen,
+                        width = GWscreen.winfo_width(),
+                        height = GWscreen.winfo_height()/2,
                         highlightbackground = 'black',
                         highlightthickness = 1
                         )
-    startover = tk.Frame(board.fr,
-                         height = board.fr.winfo_height()/2,
+    startover = tk.Frame(GWscreen,
+                         height = GWscreen.winfo_height()/2,
                          highlightbackground = 'black',
                          highlightthickness = 1)
-    change = tk.Frame(board.fr,
+    change = tk.Frame(GWscreen,
                       highlightbackground = 'black',
                       highlightthickness = 1)
     gamewin.pack_propagate(False)
@@ -220,11 +222,12 @@ def gameWin():
     change.bind("<Button-1>",setDifficulty)
     tk.Label(change, text = "Change Difficulty").pack(expand=True)
     def gameWinConf(event):
-        gamewin.config(width=board.fr.winfo_width(),
-                        height = board.fr.winfo_height()/2)
-        startover.config(height = board.fr.winfo_height()/2)
-    board.fr.bind('<Configure>',gameWinConf)
-
+        gamewin.config(width=GWscreen.winfo_width(),
+                        height = GWscreen.winfo_height()/2)
+        startover.config(height = GWscreen.winfo_height()/2)
+    GWscreen.bind('<Configure>',gameWinConf)
+    GWscreen.bind('<Control-Key-r>', lambda event, dif=board.difficulty: newGame(dif))
+    GWscreen.bind("<Control-Key-w>", lambda event: window.destroy())
 
    
 def openNeighbors(x,y):
@@ -318,7 +321,6 @@ def solve():
         board.outside_view()
         clicks = solve.solve(board.game)
         for click in clicks:
-            print(click)
             board.click(*click)
 
 
@@ -333,7 +335,7 @@ board = Display(window,1,1,1)
 setDifficulty('<Button>')
 
 #Keeps the window open untill closure
-window.bind('<Control-Key-c>',lambda event: solve())
+window.bind('<Control-Key-s>',lambda event: solve())
 window.bind('<Configure>',conf)
 window.bind("<Control-Key-w>", lambda event: window.destroy())
 window.mainloop()
