@@ -322,6 +322,7 @@ def solve():
         clicks = solve.solve(board.game)
         for click in clicks:
             board.click(*click)
+#        clicks = []
 
 
 

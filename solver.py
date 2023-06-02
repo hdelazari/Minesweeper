@@ -47,7 +47,8 @@ class Solver:
             self.click.append((pos[0],pos[1],1))
     
     def set_theory(self, board):
-        positions = set()
+        positions_open = set()
+        positions_flag = set()
         coborders = self.find_coborder(board)
         for (first, second) in itertools.combinations(coborders, 2):
             first_neighbors = self.list_neighbors(board, first, '')
@@ -55,11 +56,15 @@ class Solver:
             first_flags = self.list_neighbors(board, first, 'f')
             second_flags = self.list_neighbors(board, second, 'f')
             if board[first[0]][first[1]]-len(first_flags)-len(first_neighbors.difference(second_neighbors))==board[second[0]][second[1]]-len(second_flags):
-                positions = positions.union(second_neighbors.difference(first_neighbors))
+                positions_open = positions_open.union(second_neighbors.difference(first_neighbors))
+                positions_flag = positions_flag.union(first_neighbors.difference(second_neighbors))
             if board[second[0]][second[1]]-len(second_flags)-len(second_neighbors.difference(first_neighbors))==board[first[0]][first[1]]-len(first_flags):
-                positions = positions.union(first_neighbors.difference(second_neighbors))
-        for pos in positions:
+                positions_open = positions_open.union(first_neighbors.difference(second_neighbors))
+                positions_flag = positions_flag.union(second_neighbors.difference(first_neighbors))
+        for pos in positions_open:
             self.click.append((pos[0],pos[1],1))
+        for pos in positions_flag:
+            self.click.append((pos[0],pos[1],3))
 
     def test_borders(self, board):
         border = self.find_border(board)
