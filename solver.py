@@ -3,7 +3,7 @@ import itertools
 
 
 class Solver:
-    def solve(self,board):
+    def solve(self,board,total_bombs):
         self.click = []
         self.rows = len(board)
         self.columns = len(board[0])
@@ -18,7 +18,8 @@ class Solver:
         self.test_borders(board)
         if self.click:
             return set(self.click)
-        return []
+        self.combinatorics(board, total_bombs)
+        return self.click
 
     def flag_and_open(self, board):
         for i in range(self.rows):
@@ -27,8 +28,7 @@ class Solver:
                     if board[i][j]-self.count_neighbors(board,(i,j),'f')==self.count_neighbors(board, (i,j),''):
                         self.click_neighbors(board, (i,j), 3)
                     if board[i][j]==self.count_neighbors(board, (i,j),'f'):
-                        self.click_neighbors(board, (i,j), 1)
-    
+                        self.click_neighbors(board, (i,j), 1)    
    
     def set_theory(self, board):
         positions_open = set()
@@ -53,16 +53,17 @@ class Solver:
     def test_borders(self, board):
         border = self.find_border(board)
         x = len(border)
-        print('n= '+str(x))
         if x==0:
             return []
-        if x>=20:
+        print('Borders: n = '+str(x))
+        if x>=15:
             print("Would take too long, skipping")
             return []
         subsets = self.powerset(border)
         flag = (1 << x)-1
         click = (1 << x)-1
         progress = 0
+        print('['+' '*10+']', end='')
         for subset in subsets:
             progress = (subset*10)//((1 << x)-1)
             if progress-(subset-1)*10//((1 << x)-1)>=1:
@@ -77,6 +78,31 @@ class Solver:
         for tile in subsets[flag]:
             self.click.append((tile[0],tile[1],3))
         for tile in subsets[click]:
+            self.click.append((tile[0],tile[1],1))
+    
+    def combinatorics(self, board, total_bombs):
+        current_bombs = self.count_bombs(board)
+        free_spaces = self.list_free(board)
+        x = len(free_spaces)
+        if x == 0:
+            return []
+        print('Combinatorics: n = '+str(x)+', b = '+str(total_bombs-current_bombs))
+        if x>=15:
+            print('Would take too long, skipping')
+            return []
+        flag = set(free_spaces)
+        click = set(free_spaces)
+        for subset in itertools.combinations(free_spaces, total_bombs-current_bombs):
+            test_board = copy.deepcopy(board)
+            test_board = self.add_flag(test_board, subset)
+            if self.is_valid_board(test_board):
+                flag = flag.intersection(set(subset))
+                click = click.intersection(set(free_spaces).difference(set(subset)))
+        print(flag)
+        print(click)
+        for tile in flag:
+            self.click.append((tile[0],tile[1],3))
+        for tile in click:
             self.click.append((tile[0],tile[1],1))
 
     def click_neighbors(self, board, coords, event_num):
@@ -170,3 +196,19 @@ class Solver:
         for i in range(1 << x):
             subsets[i]=[full_set[j] for j in range(x) if (i & (1 << j))]
         return subsets
+
+    def count_bombs(self, board):
+        count=0
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if board[i][j] == 'f':
+                    count+=1
+        return count
+
+    def list_free(self, board):
+        free_tiles = []
+        for i in range(self.rows):
+            for j in range(self.columns):
+                if board[i][j] == '':
+                    free_tiles.append((i,j))
+        return free_tiles

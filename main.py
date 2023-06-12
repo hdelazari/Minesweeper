@@ -319,7 +319,7 @@ def solve():
     clicks = [(0,0,0)]
     while clicks:
         board.outside_view()
-        clicks = solve.solve(board.game)
+        clicks = solve.solve(board.game, board.difficulty[2])
         for click in clicks:
             board.click(*click)
 #        clicks = []
